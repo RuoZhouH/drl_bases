@@ -24,6 +24,7 @@ for x, y in xyu_tuples:
     print('\n')
     print('[+]*****==== x = {}, y = {} ===*****'.format(x, y))
     display(result)
+    display("hahahahh")
     print('q_hungry_eat - q_hungry_none = ')
     display(sympy.simplify(result[q_hungry_eat]- result[q_hungry_none]))
     print('q_full_eat - q_full_none = ')
