@@ -51,7 +51,8 @@ def set_node_map(node_map, node, node_list, path_map):
         # 对角线为0
         node_map[i][i] = 0
     for x, y, val in node_list:
-        node_map[node.index(x)][node.index(y)] = node_map[node.index(y)][node.index(x)] = val
+        # node_map[node.index(x)][node.index(y)] = node_map[node.index(y)][node.index(x)] = val
+        node_map[node.index(x)][node.index(y)] = val
         path_map[node.index(x)][node.index(y)] = node.index(y)
         path_map[node.index(y)][node.index(x)] = node.index(x)
 
@@ -117,8 +118,8 @@ if __name__ == "__main__":
     set_node_map(node_map, node, node_list, path_map)
 
     # select one node to obj node, e.g. A --> D(node[0] --> node[3])
-    start_point = node[3]
-    end_point = node[5]
+    start_point = node[8]
+    end_point = node[90]
     from_node = node.index(start_point)
     to_node = node.index(end_point)
     Floydpath = Floyd_Path(node, node_map, path_map)
