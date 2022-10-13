@@ -119,7 +119,7 @@ if __name__ == "__main__":
 
     # select one node to obj node, e.g. A --> D(node[0] --> node[3])
     start_point = node[8]
-    end_point = node[90]
+    end_point = node[9]
     from_node = node.index(start_point)
     to_node = node.index(end_point)
     Floydpath = Floyd_Path(node, node_map, path_map)

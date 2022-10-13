@@ -1,0 +1,7 @@
+{
+  "xrange": [0,10],
+  "yrange": [0,10],
+  "start_point": [0, 1],
+  "goal_point": [8, 9],
+  "edge_cost": 10
+}
