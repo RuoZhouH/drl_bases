@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 # -*- coding: utf-8 -*-
+import copy
 import re
 
 import requests
@@ -15,7 +16,9 @@ import math
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 import matplotlib.colors as colors
-
+import datetime
+import time
+import gif
 
 def ideal_base_path(start, end, withBucket):
     # 代价最小路径规划查询接口
@@ -101,30 +104,75 @@ def map_scatter(map_path):
     return g_point_codes, g_coords, g_point_coord, storage_points, station_points, waiting_points
 
 
+def get_time_stamp(valid_time):
+    dd = datetime.datetime.strptime(valid_time, '%Y-%m-%d %H:%M:%S,%f')
+    # dd = datetime.datetime.strptime(valid_time, '%H:%M:%S')
+    ts = int(time.mktime(dd.timetuple()) * 1000.0 + (dd.microsecond / 1000.0))
+    return ts
+
+
 if __name__ == "__main__":
     # logs = "F:/QP/liupintangdata/logData/congestion1/testCongestions.log"
     # logs = "F:/QP/liupintangdata/logData/origin/testOrigins.log"
     # logs = 'F:/QP/wanyitongpath/logData/origin/pushPointso1.log'
-    logs = 'F:/QP/wanyitongpath/logData/congestion/pushPointsc1.log'
-    pattern = ".*mes\":(.*)| .*"
+
+    #################################################################################
+    # 按时间段提取推点信息
+    #
+    #################################################################################
+    # 按时间提取
+    logs = 'F:/QP/wanyitongpath/logData/congestion/test2.log'
+    # pattern = ".*mes\":(.*)| .*"
     # pattern_path = '2022.*?"actionId":"(.*?)".*?updateAgvContextPath\|current.*?path\|pathStr:(.*?)->\|turningStr:(.*?)->"'
     # pattern_bucket = '2022.*?"actionId":"(.*?)".*?preMove.*?withBucket=(.*?),.*?startPos=(.*?),.*?trueDestCode=\'(.*?)\''
-    pattern_push_points = '2022.*?PointPushService.*?wayPoints=\[(.*?)\].*'
-    path_dict = {}
-    turning_dict = {}
-    bucket_dict = {}
+    # pattern_push_points = '2022.*?PointPushService.*?wayPoints=\[(.*?)\].*'
+    pattern_last_push_points = '2022\-(.*?)\ INFO.*?PointPushService.*?wayPoints=\[(.*?)\].*'
+
+    # 日志年份
+    years = "2022-"
+    start_time = None
+    end_time = None
+    # path_dict = {}
+    # turning_dict = {}
+    # bucket_dict = {}
 
     push_list = []
-
+    push_total_list = []
+    time_list = []
+    delata_time = 2*60*1000
     road_ways = road_way.Road_way.ROADWAYS
-    # 提取更新后的路径
+    # 提取时间戳
     for line in open(logs, "r", encoding='UTF-8'):
-        match_path = re.match(pattern_push_points, line)
+        match_path = re.match(pattern_last_push_points, line)
         # match_bucket = re.match(pattern_bucket, line)
         if match_path:
-            listpoint = match_path.group(1).split(', ')
-            if listpoint is not None:
-                push_list.append(listpoint)
+            ts1 = get_time_stamp(years + match_path.group(1).split(' ')[0] + ' ' + match_path.group(1).split(' ')[1])
+            time_list.append(ts1)
+
+    #################################################################################
+    # 根据时间戳获取开始时间与结束时间
+    # 然后根据时间段获取各个时间段的锁闭信息
+    #################################################################################
+    # delata_time为时间段间隔
+    start_time = min(time_list)
+    end_time = max(time_list)
+    n = 0
+    for line in open(logs, "r", encoding='UTF-8'):
+        match_path = re.match(pattern_last_push_points, line)
+        if match_path:
+            ts2 = get_time_stamp(years + match_path.group(1).split(' ')[0] + ' ' + match_path.group(1).split(' ')[1])
+            if start_time + delata_time * n < ts2 < start_time + delata_time * (n + 1) and ts2 < end_time:
+                listpoint = match_path.group(2).split(', ')
+                if listpoint is not None:
+                    push_list.append(listpoint)
+            elif ts2 >= start_time + delata_time * (n+1):
+                push_total_list.append(push_list)
+                push_list = []
+                listpoint = match_path.group(2).split(', ')
+                if listpoint is not None:
+                    push_list.append(listpoint)
+                n += 1
+
 
         # agv_code = agv_code_pattern.group(1).split("|")[0].split("\"")[1]
         # path = agv_code_pattern.group(1).split("|")[5].split(":")[1].split("->")[:-1]
@@ -177,9 +225,7 @@ if __name__ == "__main__":
     x_c5, y_c5 = zip(*bucket_point_coords)
     x_c7, y_c7 = zip(*station_point_coords)
     x, y = zip(*g_coords)
-    plt.scatter(x, y, c='g', marker="+")
-    plt.scatter(x_c5, y_c5, c='gray', marker="s")
-    plt.scatter(x_c7, y_c7, c='w', marker="d", edgecolors='k')
+
 
     # 用坐标限定统计的主干道的范围
     for pp in path_points:
@@ -190,8 +236,8 @@ if __name__ == "__main__":
     print("main way points size", len(main_way_points))
 
     #################################################################################
-    # 绕路统计
-    # 出库任务  返库任务等
+    # 主干道锁闭点统计
+    # 根据码点申请次数来计数
     #################################################################################
 
     # 获取指定巷道的存储点
@@ -210,26 +256,55 @@ if __name__ == "__main__":
     C_cmap = []
 
     print("-----------------路径流量统计---------------------")
-    print(len(push_list))
-    for path in push_list:
-        for point in path:
-            if point not in main_way_points:
-                continue
-            point_belong[point] += 1
+    print(len(push_total_list))
+    plt.ion()
+    # gif.options.matplotlib["dpi"] = 1080
 
-    for pt in main_way_points:
-        x = g_point_coord[pt][0]
-        y = g_point_coord[pt][1]
-        X_coord.append(x)
-        Y_coord.append(y)
-        C_cmap.append(point_belong[pt])
+    @gif.frame
+    def plot(g_point_coord, main_way_points, point_belong_copy):
+        for pt in main_way_points:
+            x = g_point_coord[pt][0]
+            y = g_point_coord[pt][1]
+            X_coord.append(x)
+            Y_coord.append(y)
+            C_cmap.append(point_belong_copy[pt])
+        plt.scatter(X_coord, Y_coord, marker='o', c=C_cmap, s=20, cmap='cool')
 
-    # plt.figure(figsize=(12, 4))
-    # fig = plt.figure()
-    # ax = plt.add_subplot(111)
-    plt.scatter(X_coord, Y_coord, marker='o', c=C_cmap, s=100, cmap='cool')
-    plt.show()
+    frames = []
+    for push_list in push_total_list:
+        point_belong_copy = copy.deepcopy(point_belong)
+        for path in push_list:
+            for point in path:
+                if point not in main_way_points:
+                    continue
+                point_belong_copy[point] += 1
 
+        for pt in main_way_points:
+            x = g_point_coord[pt][0]
+            y = g_point_coord[pt][1]
+            X_coord.append(x)
+            Y_coord.append(y)
+            C_cmap.append(point_belong_copy[pt])
+
+        plt.clf()
+        plt.scatter(x, y, c='g', marker="+")
+        plt.scatter(x_c5, y_c5, c='gray', marker="s")
+        plt.scatter(x_c7, y_c7, c='w', marker="d", edgecolors='k')
+        # plt.figure(figsize=(12, 4))
+        # fig = plt.figure()
+        # ax = plt.add_subplot(111)
+        plt.scatter(X_coord, Y_coord, marker='o', c=C_cmap, s=100, cmap='cool')
+        # frame = plot(g_point_coord, main_way_points, point_belong_copy)
+        # frames.append(frame)
+        # plt.show()
+        # time.sleep(5)
+        plt.pause(0.9)
+        # matplotlib.animation 保存为gif格式
+        # plt.savefig('picture.png', dpi=300)
+        plt.ioff()
+        # plt.show()
+
+    # gif.save(frames, './img/example.gif', duration=3.5, unit="s", between="startend")
 
 
 

@@ -1,14 +1,8 @@
 # -*- coding: utf-8 -*-
-# -*- coding: utf-8 -*-
-
 import io, sys, json
 import math
-
 import matplotlib.pyplot as plt
-import pylab as p
-import requests
 import time
-import pymysql
 from appdirs import unicode
 import queue
 
@@ -231,27 +225,8 @@ class Simulation(object):
 
 
 if __name__ == '__main__':
-
-    # 1.获取地图的点位数据
-    # preprocess_point_data("./map/LPT_LPT_4.4.1.json")
+    ## 1. 抓取日志关键字
     preprocess_point_data("./map/DEBR.json")
-    # print(g_point_codes)
-    # print(g_point_coords)
-    # plt.ion()
-
-    # 静态数据查询
-    # 3.获取小车货架实时点位（查数据库）
-    # connect_mysql = pymysql.connect(host="172.31.236.2", port=3306, user="root", password="root123",
-    #                                 database="evo_basic", charset="utf8")
-    # cursor = connect_mysql.cursor()
-    # sql = "SELECT roadway_point_code FROM  basic_slot where bucket_layer = \'1\'"
-    # cursor.execute(sql)
-    # bucket_point = cursor.fetchall()
-    # sql1 = "SELECT point_code FROM  basic_station_point where state=\'effective\'"
-    # cursor.execute(sql1)
-    # station_point = cursor.fetchall()
-    # connect_mysql.close()
-
     # 工作站和货架
     bucket_point_coords = []
     station_point_coords = []
@@ -263,60 +238,11 @@ if __name__ == '__main__':
             station_point_coords.append(g_point_coord[j])
     x_c5, y_c5 = zip(*bucket_point_coords)
     x_c7, y_c7 = zip(*station_point_coords)
-
-    # while 1:
-    # 2.获取拥堵等级点位数据
-    # base_url = "http://172.31.236.2:9001"
-    # # /api/rcs/warehouse/{warehouseId}/lockedZoneQuery/getPointsCongestionLevel
-    # url = base_url + "/api/rcs/traffic/info/getPointToAgvMap"
-    # form_headers = {
-    #     "Accept": "*/*"
-    # }
-    # data = {
-    #     "username": "root",
-    #     "password": "root123"
-    # }
-    # response = requests.get(url=url, data=data, headers=form_headers)
-    # # data：key为码点pointCode，value为小车agvCode
-    # data = json.loads(response.text)['data']
-
-    # key为point_point, value为 距离  距离矩阵制造
-    distance_map = {}
-
-    # 聚类字典，
-    # key为聚类name，
-    # value为点集合Set
-    # 点位坐标 - 聚类
-    # cluster_point_map = {}
-    # point_cluster_map = {}
-
-    # cluster_point_map, point_cluster_map = cluster_process(g_point_coord, data)
-
-    # cluster_point_map = {
-    #     "cluster_4": ["ksm3CN", "x62icP", "KEThKx", "Fd8nnD", "WtJwWy", "H5ycDZ", "hWSJcB", "twynrT", "GPjaQm"],
-    #     "cluster_3":["h8NjhN", "6zjjyd", "eGJ2Wm", "TZ7TYY", "rjDSis", "YxNAED", "KzfQib", "eGt6St", "JwJBHh", "nb8DbB",
-    #                  "tXT665", "HJ8b2B", "HcPfyJ", "ReBwbe", "dsWnJy", "JBEZT8", "jKGjcz"],
-    #     "cluster_2":["y3FpJQ", "KFPh3X", "aEkBar", "QNih56", "Qxydwj", "kWx8xi", "3MHQpx",
-    #                  "Czc77c", "FdR8hY", "RkTHWT", "Z65FAF", "aNh2RS", "Nyysmj", "mPFKwA", "cXB5SH", "ZpaSCr"],
-    #     "cluster_1":["MDpaiT", "xZS48J", "WFZZX8", "Yix66P", "YEEDGB", "HTbj3E", "b8J2W7", "exAZ2c", "yEtZMM"],
-    #     "cluster_0":["Fijr52", "txWkhb", "B2EK8G", "EcdHWJ", "cpW3Pb", "K5TBd2", "wASCAk", "CWNPdj"]
-    # }
-
-    # cluster_point_map = {
-    #     "cluster_4": ["QfydHW", "eGJ2Wm", "nDRcNC", "TZ7TYY", "kckaft", "tA47PY", "aZatSK", "a7RWTW", "YxNAED", "rjDSis",
-    #                   "nb8DbB", "7mWWJk", "SSH58k", "FeYmBj", "XekjxH", "wRTaFj", "JBEZT8", "KGd2mn", "iFYSbw", "jfTk6i",
-    #                   "Sntes5", "7z2men", "KzfQib", "eGt6St", "tXT665", "HJ8b2B", "NNEmNC", "bY8WKY", "FM5eX7"],
-    #     "cluster_3": ["i6wFFX", "2tYZs8", "c2SKtm", "ZDtRJt", "Z4f3eY", "e6njxh", "GwJCNp", "B6C2fh", "7ZFaPa"],
-    #     "cluster_2":["jdXsM4", "nTYdti", "tJijEm", "eCi2KG"],
-    #     "cluster_1":["xYZcyC", "x62icP", "KEThKx", "ksm3CN", "Fd8nnD", "WtJwWy", "FdHDpr", "H5ycDZ", "twynrT", "GPjaQm", "fRxrQ2", "hWSJcB"]
-    # }
-
+    ## 2. 展示点集合（等级对比展示）
     cluster_point_map = {
-        # "cluster_4": ["ktGNN7", "RsChY7", "TZ7TYY", "mGPtPX", "aZatSK", "a7RWTW", "Qmdi3i", "zr3AhA", "As5PaA", "GAM7P6", "D6YR7E", "HKRnSE", "W8BG8P", "wRTaFj", "EREtjG", "mjd8Zh", "K7dhGa", "wHSTS6", "NNEmNC", "JEnKCe", "PcpTHH"]
-        "cluster_5":["8XNS87", "GyXErc", "6rFD2Y", "mQmJHN", "EhXkHC", "WWecr2", "pCGnj7", "dmZnyT", "pwBciT", "58MmTd", "tsshEW", "RpPTtS", "FTxdZw", "GZtjNs", "Bb8wJJ", "4KtH5W"],
-
-        # "cluster_6":["rBxiT5", "ND7MQW", "DhAjKE", "8EdcDD", "S6KXFK", "5rxJ5i", "RbGiGW", "b8a8W5", "HsdTSN", "yCGdMa", "rPPm3D", "czXHPr", "ZfCnTG", "n5asjb", "YZJnR7", "n3j2Sn", "TKnpnj", "2BBFyR"]
-        "cluster_7":["pCGnj7", "RpPTtS", "FTxdZw", "GZtjNs"]
+        "cluster_5": ["8XNS87", "GyXErc", "6rFD2Y", "mQmJHN", "EhXkHC", "WWecr2", "pCGnj7", "dmZnyT", "pwBciT",
+                      "58MmTd", "tsshEW", "RpPTtS", "FTxdZw", "GZtjNs", "Bb8wJJ", "4KtH5W"],
+        "cluster_7": ["pCGnj7", "RpPTtS", "FTxdZw", "GZtjNs"]
     }
 
     cluster_points = []  # 存放每个聚类的x, y坐标
@@ -333,21 +259,6 @@ if __name__ == '__main__':
         x_each, y_each = zip(*item)
         x_c.append(x_each)
         y_c.append(y_each)
-
-    # agv坐标位置
-    # connect_mysql = pymysql.connect(host="172.31.236.2", port=3306, user="root", password="root123",
-    #                                 database="evo_rcs", charset="utf8")
-    # cursor = connect_mysql.cursor()
-    # sql = "SELECT agv_code, x, y FROM  agv_pd_status"
-    # cursor.execute(sql)
-    # agv_data = cursor.fetchall()
-    # connect_mysql.close()
-    # agv_coords = []
-    # for i in agv_data:
-    #     if i is not None:
-    #         pc, x, y = i
-    #         agv_coords.append((x, y))
-    # x_c6, y_c6 = zip(*agv_coords)
 
     plt.clf()
     # 4.散点图实时更新状态信息
