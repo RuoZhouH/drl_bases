@@ -227,6 +227,7 @@ class Simulation(object):
 if __name__ == '__main__':
     ## 1. 抓取日志关键字
     preprocess_point_data("./map/DEBR.json")
+    plt.ion()
     # 工作站和货架
     bucket_point_coords = []
     station_point_coords = []
@@ -238,53 +239,56 @@ if __name__ == '__main__':
             station_point_coords.append(g_point_coord[j])
     x_c5, y_c5 = zip(*bucket_point_coords)
     x_c7, y_c7 = zip(*station_point_coords)
-    ## 2. 展示点集合（等级对比展示）
-    cluster_point_map = {
-        "cluster_5": ["8XNS87", "GyXErc", "6rFD2Y", "mQmJHN", "EhXkHC", "WWecr2", "pCGnj7", "dmZnyT", "pwBciT",
-                      "58MmTd", "tsshEW", "RpPTtS", "FTxdZw", "GZtjNs", "Bb8wJJ", "4KtH5W"],
-        "cluster_7": ["pCGnj7", "RpPTtS", "FTxdZw", "GZtjNs"]
-    }
 
-    cluster_points = []  # 存放每个聚类的x, y坐标
-    for i in cluster_point_map.keys():
-        each_cluster_set = cluster_point_map[i]
-        each_cluster_set_cood = []
-        for each_cluster in each_cluster_set:
-            each_cluster_set_cood.append(g_point_coord[each_cluster])
+    while 1:
+        plt.clf()
+        # 4.散点图实时更新状态信息
+        x, y = zip(*g_point_coords)
+        plt.scatter(x, y,s=10, c='darksalmon', marker="s")
 
-        cluster_points.append(each_cluster_set_cood)
+        # 红色：（3, 4]   # 品红 （2, 3]   # 蓝色（1, 2]    # 青蓝 （0, 1]
 
-    x_c, y_c = [], []
-    for item in cluster_points:
-        x_each, y_each = zip(*item)
-        x_c.append(x_each)
-        y_c.append(y_each)
+        color_dict = {0: 'r', 1: 'm', 2: 'b', 3: 'c', 4: 'darkorange', 5: "darksalmon", 6: "crimson",
+                      7: "darkmagenta", 8: "mediumorchid", 9: "violet"}
 
-    plt.clf()
-    # 4.散点图实时更新状态信息
-    x, y = zip(*g_point_coords)
-    plt.scatter(x, y, c='g', marker="+")
+        color_dict1 = {0: 'r', 1: 'b'}
 
-    # 红色：（3, 4]   # 品红 （2, 3]   # 蓝色（1, 2]    # 青蓝 （0, 1]
+        plt.scatter(x_c5, y_c5, s=10, c='gray', marker="s")
+        # plt.scatter(x_c6, y_c6, c='green', marker="s")
+        plt.scatter(x_c7, y_c7, s=10, c='w', marker="d", edgecolors='k')
 
-    color_dict = {0: 'r', 1: 'm', 2: 'b', 3: 'c', 4: 'darkorange', 5: "aliceblue", 6: "darksalmon", 7: "crimson",
-                  8: "darkmagenta", 9: "mediumorchid", 10: "violet"}
+        ## 2. 展示点集合（等级对比展示）
+        cluster_point_map = {
+            "cluster_5": ["8XNS87", "GyXErc", "6rFD2Y", "mQmJHN", "EhXkHC", "WWecr2", "pCGnj7", "dmZnyT", "pwBciT",
+                          "58MmTd", "tsshEW", "RpPTtS", "FTxdZw", "GZtjNs", "Bb8wJJ", "4KtH5W"],
+            "cluster_7": ["pCGnj7", "RpPTtS", "FTxdZw", "GZtjNs"]
+        }
 
-    color_dict1 = {0: 'r', 1: 'b'}
 
-    plt.scatter(x_c5, y_c5, c='gray', marker="s")
-    # plt.scatter(x_c6, y_c6, c='green', marker="s")
-    plt.scatter(x_c7, y_c7, c='w', marker="d", edgecolors='k')
+        cluster_points = []  # 存放每个聚类的x, y坐标
+        for i in cluster_point_map.keys():
+            each_cluster_set = cluster_point_map[i]
+            each_cluster_set_cood = []
+            for each_cluster in each_cluster_set:
+                each_cluster_set_cood.append(g_point_coord[each_cluster])
 
-    for cluster_index in range(len(x_c)):
-        x_plt = x_c[cluster_index]
-        y_plt = y_c[cluster_index]
-        plt.scatter(x_plt, y_plt, c=color_dict1[cluster_index % 10], marker='o', alpha=0.8)
+            cluster_points.append(each_cluster_set_cood)
 
-    plt.grid(True, which='both', linewidth=0.2)
+        x_c, y_c = [], []
+        for item in cluster_points:
+            x_each, y_each = zip(*item)
+            x_c.append(x_each)
+            y_c.append(y_each)
 
-    # plt.pause(0.1)
-    # matplotlib.animation 保存为gif格式
-    # plt.savefig('picture.png', dpi=3000)
-    # plt.ioff()
-    plt.show()
+        for cluster_index in range(len(x_c)):
+            x_plt = x_c[cluster_index]
+            y_plt = y_c[cluster_index]
+            plt.scatter(x_plt, y_plt, s=30, c=color_dict1[cluster_index % 10], marker='o', alpha=0.8)
+
+        plt.grid(True, which='both', linewidth=0.2)
+
+        plt.pause(0.1)
+        # matplotlib.animation 保存为gif格式
+        # plt.savefig('picture.png', dpi=3000)
+        plt.ioff()
+        # plt.show()
